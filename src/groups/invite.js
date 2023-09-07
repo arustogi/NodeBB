@@ -84,6 +84,7 @@ module.exports = function (Groups) {
         return __awaiter(this, void 0, void 0, function* () {
             uids = Array.isArray(uids) ? uids : [uids];
             uids = yield inviteOrRequestMembership(groupName, uids, 'invite');
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const notificationData = yield Promise.all(uids.map(uid => notifications.create({
                 type: 'group-invite',
                 bodyShort: `[[groups:invited.notification_title, ${groupName}]]`,
@@ -98,6 +99,7 @@ module.exports = function (Groups) {
         return __awaiter(this, void 0, void 0, function* () {
             uids = Array.isArray(uids) ? uids : [uids];
             uids = uids.filter(uid => parseInt(uid, 10) > 0);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const [exists, isMember, isPending, isInvited] = yield Promise.all([
                 Groups.exists(groupName),
                 Groups.isMembers(uids, groupName),
@@ -108,8 +110,10 @@ module.exports = function (Groups) {
                 throw new Error('[[error:no-group]]');
             }
             uids = uids.filter((uid, i) => !isMember[i] && ((type === 'invite' && !isInvited[i]) || (type === 'request' && !isPending[i])));
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const set = type === 'invite' ? `group:${groupName}:invited` : `group:${groupName}:pending`;
             yield db.setAdd(set, uids);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const hookName = type === 'invite' ? 'inviteMember' : 'requestMembership';
             plugins.hooks.fire(`action:group.${hookName}`, {
                 groupName: groupName,
@@ -132,8 +136,11 @@ module.exports = function (Groups) {
         return __awaiter(this, void 0, void 0, function* () {
             const isArray = Array.isArray(uids);
             uids = isArray ? uids : [uids];
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const checkUids = uids.filter(uid => parseInt(uid, 10) > 0);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const isMembers = yield db.isSetMembers(set, checkUids);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const map = _.zipObject(checkUids, isMembers);
             return isArray ? uids.map(uid => !!map[uid]) : !!map[uids[0]];
         });
@@ -143,6 +150,7 @@ module.exports = function (Groups) {
             if (!groupName) {
                 return [];
             }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             return yield db.getSetMembers(`group:${groupName}:pending`);
         });
     };
