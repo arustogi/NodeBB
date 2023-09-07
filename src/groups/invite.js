@@ -95,7 +95,7 @@ module.exports = function (Groups) {
             yield Promise.all(uids.map((uid, index) => notifications.push(notificationData[index], uid)));
         });
     };
-    function inviteOrRequestMembership(groupName, uids, type) {
+    function inviteOrRequestMembership(groupName , uids, type) {
         return __awaiter(this, void 0, void 0, function* () {
             uids = Array.isArray(uids) ? uids : [uids];
             uids = uids.filter(uid => parseInt(uid, 10) > 0);
@@ -122,7 +122,7 @@ module.exports = function (Groups) {
             return uids;
         });
     }
-    Groups.isInvited = function (uids, groupName) {
+    Groups.isInvited = function (uids, groupName ) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield checkInvitePending(uids, `group:${groupName}:invited`);
         });

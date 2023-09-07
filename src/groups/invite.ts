@@ -20,6 +20,34 @@ interface Group {
 }
 
 module.exports = function (Groups: Group) {
+    async function inviteOrRequestMembership(groupName: string, uids:any, type) {
+        uids = Array.isArray(uids) ? uids : [uids];
+        uids = uids.filter(uid => parseInt(uid, 10) > 0);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const [exists, isMember, isPending, isInvited] = await Promise.all([
+            Groups.exists(groupName),
+            Groups.isMembers(uids, groupName),
+            Groups.isPending(uids, groupName),
+            Groups.isInvited(uids, groupName),
+        ]);
+
+        if (!exists) {
+            throw new Error('[[error:no-group]]');
+        }
+
+        uids = uids.filter((uid, i) => !isMember[i] && ((type === 'invite' && !isInvited[i]) || (type === 'request' && !isPending[i])));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const set = type === 'invite' ? `group:${groupName}:invited` : `group:${groupName}:pending`;
+        await db.setAdd(set, uids);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const hookName = type === 'invite' ? 'inviteMember' : 'requestMembership';
+        plugins.hooks.fire(`action:group.${hookName}`, {
+            groupName: groupName,
+            uids: uids,
+        });
+        return uids;
+    }
+
     Groups.requestMembership = async function (groupName : string, uid : number) {
         await inviteOrRequestMembership(groupName, uid, 'request');
         const { displayname } = await user.getUserFields(uid, ['username']);
@@ -76,34 +104,7 @@ module.exports = function (Groups: Group) {
         await Promise.all(uids.map((uid, index) => notifications.push(notificationData[index], uid)));
     };
 
-    async function inviteOrRequestMembership(groupName: string, uids:any, type) {
-        uids = Array.isArray(uids) ? uids : [uids];
-        uids = uids.filter(uid => parseInt(uid, 10) > 0);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const [exists, isMember, isPending, isInvited] = await Promise.all([
-            Groups.exists(groupName),
-            Groups.isMembers(uids, groupName),
-            Groups.isPending(uids, groupName),
-            Groups.isInvited(uids, groupName),
-        ]);
-
-        if (!exists) {
-            throw new Error('[[error:no-group]]');
-        }
-
-        uids = uids.filter((uid, i) => !isMember[i] && ((type === 'invite' && !isInvited[i]) || (type === 'request' && !isPending[i])));
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const set = type === 'invite' ? `group:${groupName}:invited` : `group:${groupName}:pending`;
-        await db.setAdd(set, uids);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const hookName = type === 'invite' ? 'inviteMember' : 'requestMembership';
-        plugins.hooks.fire(`action:group.${hookName}`, {
-            groupName: groupName,
-            uids: uids,
-        });
-        return uids;
-    }
-
+    
     Groups.isInvited = async function (uids, groupName : string) {
         return await checkInvitePending(uids, `group:${groupName}:invited`);
     };
