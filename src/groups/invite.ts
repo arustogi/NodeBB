@@ -25,7 +25,7 @@ module.exports = function (Groups: any) {
         await notifications.push(notification, owners);
     };
 
-    Groups.acceptMembership = async function (groupName, uid) {
+    Groups.acceptMembership = async function (groupName: string, uid: number) {
         await db.setsRemove([`group:${groupName}:pending`, `group:${groupName}:invited`], uid);
         await Groups.join(groupName, uid);
 
@@ -62,7 +62,7 @@ module.exports = function (Groups: any) {
         await Promise.all(uids.map((uid, index) => notifications.push(notificationData[index], uid)));
     };
 
-    async function inviteOrRequestMembership(groupName: string, uids:number, type) {
+    async function inviteOrRequestMembership(groupName: string, uids:any, type) {
         uids = Array.isArray(uids) ? uids : [uids];
         uids = uids.filter(uid => parseInt(uid, 10) > 0);
         const [exists, isMember, isPending, isInvited] = await Promise.all([
@@ -109,6 +109,7 @@ module.exports = function (Groups: any) {
         if (!groupName) {
             return [];
         }
-        return await db.getSetMembers(`group:${groupName}:pending`);
+        
+        return await db.getSetMembers(`group:${groupName }:pending`);
     };
 };
