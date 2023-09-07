@@ -21,7 +21,9 @@ interface Group {
 
 module.exports = function (Groups: Group) {
     async function inviteOrRequestMembership(groupName: string, uids:any, type) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         uids = Array.isArray(uids) ? uids : [uids];
+         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         uids = uids.filter(uid => parseInt(uid, 10) > 0);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const [exists, isMember, isPending, isInvited] = await Promise.all([

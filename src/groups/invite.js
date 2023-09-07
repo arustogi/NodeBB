@@ -39,6 +39,35 @@ const slugify = __importStar(require("../slugify"));
 const plugins = __importStar(require("../plugins"));
 const notifications = __importStar(require("../notifications"));
 module.exports = function (Groups) {
+    function inviteOrRequestMembership(groupName, uids, type) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            uids = Array.isArray(uids) ? uids : [uids];
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            uids = uids.filter(uid => parseInt(uid, 10) > 0);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const [exists, isMember, isPending, isInvited] = yield Promise.all([
+                Groups.exists(groupName),
+                Groups.isMembers(uids, groupName),
+                Groups.isPending(uids, groupName),
+                Groups.isInvited(uids, groupName),
+            ]);
+            if (!exists) {
+                throw new Error('[[error:no-group]]');
+            }
+            uids = uids.filter((uid, i) => !isMember[i] && ((type === 'invite' && !isInvited[i]) || (type === 'request' && !isPending[i])));
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const set = type === 'invite' ? `group:${groupName}:invited` : `group:${groupName}:pending`;
+            yield db.setAdd(set, uids);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const hookName = type === 'invite' ? 'inviteMember' : 'requestMembership';
+            plugins.hooks.fire(`action:group.${hookName}`, {
+                groupName: groupName,
+                uids: uids,
+            });
+            return uids;
+        });
+    }
     Groups.requestMembership = function (groupName, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             yield inviteOrRequestMembership(groupName, uid, 'request');
@@ -95,34 +124,7 @@ module.exports = function (Groups) {
             yield Promise.all(uids.map((uid, index) => notifications.push(notificationData[index], uid)));
         });
     };
-    function inviteOrRequestMembership(groupName , uids, type) {
-        return __awaiter(this, void 0, void 0, function* () {
-            uids = Array.isArray(uids) ? uids : [uids];
-            uids = uids.filter(uid => parseInt(uid, 10) > 0);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const [exists, isMember, isPending, isInvited] = yield Promise.all([
-                Groups.exists(groupName),
-                Groups.isMembers(uids, groupName),
-                Groups.isPending(uids, groupName),
-                Groups.isInvited(uids, groupName),
-            ]);
-            if (!exists) {
-                throw new Error('[[error:no-group]]');
-            }
-            uids = uids.filter((uid, i) => !isMember[i] && ((type === 'invite' && !isInvited[i]) || (type === 'request' && !isPending[i])));
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const set = type === 'invite' ? `group:${groupName}:invited` : `group:${groupName}:pending`;
-            yield db.setAdd(set, uids);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const hookName = type === 'invite' ? 'inviteMember' : 'requestMembership';
-            plugins.hooks.fire(`action:group.${hookName}`, {
-                groupName: groupName,
-                uids: uids,
-            });
-            return uids;
-        });
-    }
-    Groups.isInvited = function (uids, groupName ) {
+    Groups.isInvited = function (uids, groupName) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield checkInvitePending(uids, `group:${groupName}:invited`);
         });
