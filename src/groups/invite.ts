@@ -1,16 +1,12 @@
-// The next line calls a function in a module that has not been updated to TS yet
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 import * as _ from 'lodash';
-// The next line calls a function in a module that has not been updated to TS yet
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 import * as db from '../database';
 import * as user from '../user';
 import * as slugify from '../slugify';
 import * as plugins from '../plugins';
 import * as notifications from '../notifications';
 
-export default function (Groups): any {
-    Groups.requestMembership = async function (groupName, uid) {
+module.exports = function (Groups: any) {
+    Groups.requestMembership = async function (groupName : string, uid : number) {
         await inviteOrRequestMembership(groupName, uid, 'request');
         const { displayname } = await user.getUserFields(uid, ['username']);
 
@@ -66,7 +62,7 @@ export default function (Groups): any {
         await Promise.all(uids.map((uid, index) => notifications.push(notificationData[index], uid)));
     };
 
-    async function inviteOrRequestMembership(groupName, uids, type) {
+    async function inviteOrRequestMembership(groupName: string, uids:number, type) {
         uids = Array.isArray(uids) ? uids : [uids];
         uids = uids.filter(uid => parseInt(uid, 10) > 0);
         const [exists, isMember, isPending, isInvited] = await Promise.all([
@@ -92,11 +88,11 @@ export default function (Groups): any {
         return uids;
     }
 
-    Groups.isInvited = async function (uids, groupName) {
+    Groups.isInvited = async function (uids, groupName : string) {
         return await checkInvitePending(uids, `group:${groupName}:invited`);
     };
 
-    Groups.isPending = async function (uids, groupName) {
+    Groups.isPending = async function (uids, groupName: string) {
         return await checkInvitePending(uids, `group:${groupName}:pending`);
     };
 
@@ -109,7 +105,7 @@ export default function (Groups): any {
         return isArray ? uids.map(uid => !!map[uid]) : !!map[uids[0]];
     }
 
-    Groups.getPending = async function (groupName) {
+    Groups.getPending = async function (groupName:string) {
         if (!groupName) {
             return [];
         }

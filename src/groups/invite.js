@@ -32,17 +32,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// The next line calls a function in a module that has not been updated to TS yet
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 const _ = __importStar(require("lodash"));
-// The next line calls a function in a module that has not been updated to TS yet
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 const db = __importStar(require("../database"));
 const user = __importStar(require("../user"));
 const slugify = __importStar(require("../slugify"));
 const plugins = __importStar(require("../plugins"));
 const notifications = __importStar(require("../notifications"));
-function default_1(Groups) {
+module.exports = function (Groups) {
     Groups.requestMembership = function (groupName, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             yield inviteOrRequestMembership(groupName, uid, 'request');
@@ -150,6 +146,4 @@ function default_1(Groups) {
             return yield db.getSetMembers(`group:${groupName}:pending`);
         });
     };
-}
-exports.default = default_1;
-;
+};
